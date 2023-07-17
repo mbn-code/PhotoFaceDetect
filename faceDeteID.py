@@ -50,11 +50,6 @@ def detect_faces(frame, net, min_confidence, person_tracker):
                 person_id = person_tracker.get_person_id()
                 person_tracker.update_person_id(face_id, person_id)
 
-                # Save the image corresponding to the person ID
-                face_img = frame[startY:endY, startX:endX]
-                img_name = f"face_photo/face_{person_id}.jpg"
-                cv2.imwrite(img_name, face_img)
-
             # Display the person ID
             text = f"Person ID: {person_id}"
             cv2.putText(frame, text, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
@@ -63,15 +58,31 @@ def detect_faces(frame, net, min_confidence, person_tracker):
     return 0
 
 # Define the thread function
-def process_frame(frame, net, min_confidence, person_tracker):
+def process_frame(frame, net, min_confidence, person_tracker, start_time):
     # Perform face detection on the frame
     confidence = detect_faces(frame, net, min_confidence, person_tracker)
+
+    # Calculate FPS
+    end_time = time.time()
+    fps = 1 / (end_time - start_time)
+
+    # Set the color of the FPS text based on the FPS value
+    if fps < 20:
+        fps_color = (0, 0, 255)  # Red
+    elif 20 <= fps <= 50:
+        fps_color = (0, 165, 255)  # Orange
+    else:
+        fps_color = (0, 255, 0)  # Green
+
+    # Draw FPS text on the frame
+    fps_text = f"FPS: {fps:.2f}"
+    cv2.putText(frame, fps_text, (18, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, fps_color, 4)
 
 # Load the face detection model
 net = cv2.dnn.readNetFromCaffe('deploy.prototxt', 'res10_300x300_ssd_iter_140000.caffemodel')
 
 # Set the minimum confidence threshold for face detection
-min_confidence = 0.5
+min_confidence = 0.4
 
 # Initialize the video capture object
 cap = cv2.VideoCapture(0)
@@ -88,7 +99,8 @@ while True:
         break
 
     # Create a thread for processing the current frame
-    thread = threading.Thread(target=process_frame, args=(frame, net, min_confidence, person_tracker))
+    start_time = time.time()
+    thread = threading.Thread(target=process_frame, args=(frame, net, min_confidence, person_tracker, start_time))
 
     # Start the thread
     thread.start()
