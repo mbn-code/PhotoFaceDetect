@@ -41,7 +41,7 @@ def process_frame(frame, net, min_confidence):
 net = cv2.dnn.readNetFromCaffe('deploy.prototxt', 'res10_300x300_ssd_iter_140000.caffemodel')
 
 # Set the minimum confidence threshold for face detection
-min_confidence = 0.8
+min_confidence = 0.3
 
 # Initialize the video capture object
 cap = cv2.VideoCapture(1)
