@@ -27,6 +27,12 @@ class PersonTracker:
     def mark_person_id_as_saved(self, person_id):
         self.saved_ids.add(person_id)
 
+    def get_next_unique_person_id(self):
+        while True:
+            new_person_id = self.get_person_id()
+            if not self.is_person_id_saved(new_person_id):
+                return new_person_id
+
 def apply_studio_light(frame, startX, startY, endX, endY):
     # Define the Studio Light effect parameters
     brightness = 1.5  # Adjust the value as needed to control brightness
@@ -88,8 +94,8 @@ def detect_faces(frame, net, min_confidence, person_tracker):
             # Check if the face ID already has a person ID assigned
             person_id = person_tracker.get_person_id_from_face_id(face_id)
             if person_id is None:
-                # Assign a new person ID
-                person_id = person_tracker.get_person_id()
+                # Assign a new unique person ID
+                person_id = person_tracker.get_next_unique_person_id()
                 person_tracker.update_person_id(face_id, person_id)
 
             # Display the person ID
