@@ -2,12 +2,14 @@ import cv2
 import numpy as np
 import threading
 import time
+import os
 
 # Define a class to track person IDs
 class PersonTracker:
     def __init__(self):
         self.face_id = 0
         self.person_ids = {}
+        self.saved_ids = set()
 
     def get_person_id(self):
         self.face_id += 1
@@ -19,6 +21,37 @@ class PersonTracker:
     def get_person_id_from_face_id(self, face_id):
         return self.person_ids.get(face_id)
 
+    def is_person_id_saved(self, person_id):
+        return person_id in self.saved_ids
+
+    def mark_person_id_as_saved(self, person_id):
+        self.saved_ids.add(person_id)
+
+def apply_studio_light(frame, startX, startY, endX, endY):
+    # Define the Studio Light effect parameters
+    brightness = 1.5  # Adjust the value as needed to control brightness
+
+    # Extract the face region from the frame
+    face = frame[startY:endY, startX:endX]
+
+    # Apply the Studio Light effect by adjusting the brightness of the face region
+    frame[startY:endY, startX:endX] = cv2.convertScaleAbs(face, alpha=brightness, beta=0)
+
+def save_detected_face(frame, startX, startY, endX, endY, person_id):
+    # Create the "detected_faces" directory if it doesn't exist
+    if not os.path.exists("detected_faces"):
+        os.makedirs("detected_faces")
+
+    # Generate a unique filename for the saved face image
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    filename = f"detected_faces/face_{person_id}_{timestamp}.jpg"
+
+    # Save the detected face as an image
+    cv2.imwrite(filename, frame[startY:endY, startX:endX])
+
+    # Mark the person ID as saved
+    person_tracker.mark_person_id_as_saved(person_id)
+
 # Define the face detection function
 def detect_faces(frame, net, min_confidence, person_tracker):
     (h, w) = frame.shape[:2]
@@ -27,6 +60,15 @@ def detect_faces(frame, net, min_confidence, person_tracker):
     # Pass the blob through the network and obtain the detections
     net.setInput(blob)
     detections = net.forward()
+
+    # Initialize the highest confidence as 0
+    max_confidence = 0
+
+    # Determine the overall brightness of the frame
+    brightness = frame.mean()
+
+    # Check if the frame is in low light condition
+    is_low_light = brightness < 100  # You can adjust this threshold based on your preference
 
     # Loop over the detections
     for i in range(0, detections.shape[2]):
@@ -54,12 +96,28 @@ def detect_faces(frame, net, min_confidence, person_tracker):
             text = f"Person ID: {person_id}"
             cv2.putText(frame, text, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
+            # Update the maximum confidence if needed
+            if confidence > max_confidence:
+                max_confidence = confidence
+
+            # Apply Studio Light effect to the face region only in low light
+            if is_low_light:
+                apply_studio_light(frame, startX, startY, endX, endY)
+
+            # Save the detected face only if it hasn't been saved before
+            if not person_tracker.is_person_id_saved(person_id):
+                save_detected_face(frame, startX, startY, endX, endY, person_id)
+
+    # Print whether it's a low light condition or not
+    brightness_text = "Low Light" if is_low_light else "Normal Light"
+    cv2.putText(frame, brightness_text, (18, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+
     # If no face is detected, return 0 confidence
-    return 0
+    return max_confidence
 
 # Define the thread function
 def process_frame(frame, net, min_confidence, person_tracker, start_time):
-    # Perform face detection on the frame
+    # Perform face detection on the frame and get the confidence score
     confidence = detect_faces(frame, net, min_confidence, person_tracker)
 
     # Calculate FPS
@@ -74,15 +132,18 @@ def process_frame(frame, net, min_confidence, person_tracker, start_time):
     else:
         fps_color = (0, 255, 0)  # Green
 
-    # Draw FPS text on the frame
+    # Draw FPS and confidence text on the frame
     fps_text = f"FPS: {fps:.2f}"
     cv2.putText(frame, fps_text, (18, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, fps_color, 4)
+
+    confidence_text = f"Confidence: {confidence:.2f}"
+    cv2.putText(frame, confidence_text, (18, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
 # Load the face detection model
 net = cv2.dnn.readNetFromCaffe('deploy.prototxt', 'res10_300x300_ssd_iter_140000.caffemodel')
 
 # Set the minimum confidence threshold for face detection
-min_confidence = 0.4
+min_confidence = 0.35
 
 # Initialize the video capture object
 cap = cv2.VideoCapture(0)
