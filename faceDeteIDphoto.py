@@ -84,7 +84,7 @@ net = cv2.dnn.readNetFromCaffe('deploy.prototxt', 'res10_300x300_ssd_iter_140000
 min_confidence = 0.3
 
 # Specify the path to the photo
-photo_path = '/Users/mbn/Documents/Programmering/PhotoFaceDetect/faces2.webp'
+photo_path = 'faces.jpg'
 
 # Read the photo
 frame = cv2.imread(photo_path)
