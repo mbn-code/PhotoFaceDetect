@@ -32,6 +32,38 @@ class PersonTracker:
             new_person_id = self.get_person_id()
             if not self.is_person_id_saved(new_person_id):
                 return new_person_id
+            
+def detect_skin_color(directory='detected_faces'):
+    avg_colors = {}
+
+    for filename in os.listdir(directory):
+        if filename.endswith('.jpg') or filename.endswith('.png'):
+            img_path = os.path.join(directory, filename)
+            image = cv2.imread(img_path)
+            if image is None:
+                continue
+
+            # Convert image to RGB
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            h, w, _ = image_rgb.shape
+            total_pixels = h * w
+
+            # Sum up the RGB values
+            total_r = np.sum(image_rgb[:, :, 0])
+            total_g = np.sum(image_rgb[:, :, 1])
+            total_b = np.sum(image_rgb[:, :, 2])
+
+            # Calculate the average RGB values
+            avg_r = total_r // total_pixels
+            avg_g = total_g // total_pixels
+            avg_b = total_b // total_pixels
+
+            avg_colors[filename] = (avg_r, avg_g, avg_b)
+
+    return avg_colors
+
+def calculate_brightness(rgb):
+    return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
 
 def apply_studio_light(frame, startX, startY, endX, endY):
     # Define the Studio Light effect parameters
@@ -181,6 +213,16 @@ while True:
     # Check if the user pressed the 'q' key to quit
     if cv2.waitKey(1) == ord('q'):
         break
+
+# Call the skin color detection function
+average_skin_colors = detect_skin_color('detected_faces')
+
+# Sort the results by brightness
+sorted_skin_colors = sorted(average_skin_colors.items(), key=lambda item: calculate_brightness(item[1]))
+
+# Print the sorted results
+for filename, avg_color in sorted_skin_colors:
+    print(f'Average skin color of {filename}: {avg_color}')
 
 # Release the video capture object and close all windows
 cap.release()
