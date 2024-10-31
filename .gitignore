@@ -49,3 +49,5 @@ datasets/
 
 detected_faces
 face_photo
+
+.DS_Store
