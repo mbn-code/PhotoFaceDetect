@@ -35,12 +35,6 @@
 - **Model Integration:** Supports various pre-trained models for age and gender detection.
 - **Automated Photo Capture:** Save detected faces as separate image files with ease.
 
-## Architecture
-
-![Architecture Diagram](assets/images/architecture.png)
-
-*Figure 1: Overview of PhotoFaceDetect Architecture.*
-
 ## Installation
 
 ### Prerequisites
