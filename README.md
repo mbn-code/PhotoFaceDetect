@@ -2,8 +2,8 @@
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![GitHub Issues](https://img.shields.io/github/issues/yourusername/PhotoFaceDetect)
-![GitHub Pull Requests](https://img.shields.io/github/issues-pr/yourusername/PhotoFaceDetect)
+![GitHub Issues](https://img.shields.io/github/issues/mbn-code/PhotoFaceDetect)
+![GitHub Pull Requests](https://img.shields.io/github/issues-pr/mbn-code/PhotoFaceDetect)
 
 ## Table of Contents
 
@@ -51,7 +51,7 @@
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/PhotoFaceDetect.git
+git clone https://github.com/mbn-code/PhotoFaceDetect.git
 cd PhotoFaceDetect
 ```
 
